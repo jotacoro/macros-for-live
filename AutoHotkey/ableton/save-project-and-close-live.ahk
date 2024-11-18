@@ -1,10 +1,11 @@
-﻿#Requires AutoHotkey v2.0
+﻿#Requires AutoHotkey v2.0.18+
 #SingleInstance Force
 SendMode "Input"
 SetTitleMatchMode 2
 
 ; Define variables
 abletonLiveAppName := "Ableton Live 12 Suite.exe"
+abletonVersionInWindowTitle := "Ableton Live 12 Suite"
 ; Window title when Live Set default template is open
 newLiveSetName := "Sin título"
 projectsPath := "C:\Users\" A_UserName "wherever\your-projects\are-saved"
@@ -20,16 +21,23 @@ Else {
 	ExitApp ; Ableton is not running
 }
 
+ActivateMainAbletonLiveWindow() {
+    windows := WinGetList(abletonVersionInWindowTitle)
+    mainWindow := WinGetList(abletonVersionInWindowTitle)[1]
+    WinActivate mainWindow
+    Return mainWindow
+}
+
 ; Function to get the project name from the Ableton Live window title
 GetProjectNameFromWindow() {
     ; Activate Ableton Live window
-    WinActivate("ahk_exe " abletonLiveAppName)
+    abletonMainWindow := ActivateMainAbletonLiveWindow()
 
     ; Get the Ableton window title
-    abletonWindow := WinGetTitle("A")
+    abletonMainWindowTitle := WinGetTitle(abletonMainWindow)
 
     ; Get the project name from Window title
-    RegExMatch(abletonWindow, "(.+[^\*])(\*?)( - Ableton Live 12 Suite)", &RegExResults)
+    RegExMatch(abletonMainWindowTitle, "(.+[^\*])(\*?)( - Ableton Live 12 Suite)", &RegExResults)
     return RegExResults[1] ".als"
 }
 
@@ -43,7 +51,7 @@ projectFileExists(projectsPath := "", projectFileName := "") {
         }
 		Else
 		{
-		Continue ; Return false if file is not found
+		    Continue ; Return false if file is not found
 		}
     }
 	return false
@@ -59,23 +67,21 @@ WaitForSavedProject() {
 
 ; Function to check if the project exists, save it, close ableton and start Dropbox client
 SaveProjectAndClose() {
+    abletonMainWindow := ActivateMainAbletonLiveWindow()
     If (projectFileExists(projectsPath, projectFileName)) {
-		MsgBox projectFileExists(projectsPath, projectFileName)
-        WinActivate("ahk_exe " abletonLiveAppName)
         Send "^s"
     	WaitForSavedProject()
-    	WinClose("ahk_exe " abletonLiveAppName)
-    	WinWaitClose("ahk_exe " abletonLiveAppName)
+    	WinClose(abletonMainWindow)
+    	WinWaitClose(abletonMainWindow)
     }
     Else {
-    	WinActivate("ahk_exe " abletonLiveAppName)
         If (InStr(WinGetTitle("A"), "*")) {
 			MsgBox "Guarda el proyecto por primera vez"
 			ExitApp
     	}
     	Else {
-    	    WinClose("ahk_exe " abletonLiveAppName)
-			WinWaitClose("ahk_exe " abletonLiveAppName)
+    	    WinClose(abletonMainWindow)
+			WinWaitClose(abletonMainWindow)
     	}
     }
 }

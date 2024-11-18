@@ -1,3 +1,5 @@
+#Requires AutoHotkey v2.0.18+.18+
+
 ;To not mix user activity with the script activity
 SendMode "Input"
 ; To not run more than an instance of this script
@@ -5,6 +7,7 @@ SendMode "Input"
 
 ; Define variables
 abletonLiveAppName := "Ableton Live 12 Suite.exe"
+abletonVersionInWindowTitle := "Ableton Live 12 Suite"
 projectsPath := "C:\Users\" A_UserName "wherever\your-projects\are-saved"
 
 ; The script will not exit automatically, even though it has nothing to do.
@@ -14,10 +17,17 @@ Persistent
 SetTimer SaveProject, 10000
 Return
 
+GetMainAbletonLiveWindow() {
+    windows := WinGetList(abletonVersionInWindowTitle)
+    mainWindow := WinGetList(abletonVersionInWindowTitle)[1]
+    Return mainWindow
+}
+
 ; Function to get the project name from the Ableton Live window title
 GetProjectNameFromWindow() {
+	abletonMainWindow := GetMainAbletonLiveWindow()
     ; If Ableton Live window is activated
-    if WinActive("ahk_exe " abletonLiveAppName) {
+    if WinActive(abletonMainWindow) {
 		; Get the Ableton window title
 		abletonWindowTitle := WinGetTitle("A")
 		
@@ -27,7 +37,7 @@ GetProjectNameFromWindow() {
 	}
 }
 
-; Function to check if the project already exists in your projects path
+; Function to check if the project already exists
 projectFileExists(projectsPath := "", projectFileName := "") {
     Loop Files, projectsPath . "\*.*", "R"  ; R means recurse through subfolders
     {
@@ -45,7 +55,9 @@ projectFileExists(projectsPath := "", projectFileName := "") {
 
 ; Function to wait until the "*" character is gone from the window title
 WaitForSavedProject() {
-    while (InStr(WinGetTitle("A"), "*") != 0) {  ; Check if the active window's title contains "*"
+	abletonMainWindow := GetMainAbletonLiveWindow()
+	; Check if the active window's title contains "*"
+    while (InStr(WinGetTitle(abletonMainWindow), "*") != 0) {
         Sleep(500)  ; Pause for 500 milliseconds before checking again
     }
     Return ; project is saved. "*" is not present in window title
@@ -56,9 +68,10 @@ Then checks if the project exists, and saves it in that case
 */
 SaveProject() {
 	if(ProcessExist(abletonLiveAppName)) {
+		abletonMainWindow := GetMainAbletonLiveWindow()
 		projectFileName := GetProjectNameFromWindow()
 		if (projectFileExists(projectsPath, projectFileName)) {
-			if WinActive("ahk_exe " abletonLiveAppName) {
+			if WinActive(abletonMainWindow) {
 				if (InStr(WinGetTitle("A"), "*")) {
 					Send "^s"
 					WaitForSavedProject()
@@ -67,6 +80,6 @@ SaveProject() {
 		}
 	}
 	else {
-		ExitApp
+		ExitApp ;If Ableton is not running end this script
 	}
 }
