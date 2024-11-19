@@ -1,4 +1,4 @@
-#Requires AutoHotkey v2.0.18+.18+
+#Requires AutoHotkey v2.0.18+
 
 ;To not mix user activity with the script activity
 SendMode "Input"
@@ -13,8 +13,8 @@ projectsPath := "C:\Users\" A_UserName "wherever\your-projects\are-saved"
 ; The script will not exit automatically, even though it has nothing to do.
 Persistent
 
-; Runs the SaveProject function each 10 seconds
-SetTimer SaveProject, 10000
+; Runs the SaveProject function each 10 minutes
+SetTimer SaveProject, 600000
 Return
 
 GetMainAbletonLiveWindow() {
